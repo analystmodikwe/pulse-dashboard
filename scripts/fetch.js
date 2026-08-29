@@ -51,3 +51,60 @@ async function fetchEarthquakes() {
 }
 
 fetchEarthquakes();
+
+
+// fetching weather
+
+// Fixed list of locations to fetch weather for.
+// No "get weather everywhere" endpoint exists, so we pick specific
+// places and call the API once per location.
+const locations = [
+  { name: 'Johannesburg', lat: -26.2041, lon: 28.0473 },
+  { name: 'Tokyo', lat: 35.6762, lon: 139.6503 },
+  { name: 'New York', lat: 40.7128, lon: -74.0060 }
+];
+
+async function fetchWeather() {
+  // Collect the transformed row for each location here.
+  const rows = [];
+
+  // Loop over every location and fetch its current weather one at a time.
+  for (const location of locations) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    // Build the synthetic primary key ourselves, since Open-Meteo
+    // doesn't give us a natural unique id like USGS does.
+    // Combining location name + the reading's own timestamp means
+    // re-running the script within the same minute updates this
+    // row instead of creating a duplicate.
+    const id = `${location.name}_${data.current.time}`;
+
+    rows.push({
+      id: id,
+      location_name: location.name,
+      latitude: location.lat,
+      longitude: location.lon,
+      observed_at: new Date(data.current.time).toISOString(),
+      temperature_c: data.current.temperature_2m,
+      weather_code: data.current.weather_code,
+      wind_speed_kmh: data.current.wind_speed_10m
+    });
+  }
+
+  console.log('Transformed weather rows:', rows);
+
+  // Same upsert pattern as earthquakes, just targeting the weather table.
+  const { error } = await supabase
+    .from('weather')
+    .upsert(rows, { onConflict: 'id' });
+
+  if (error) {
+    console.error('Weather upsert failed:', error.message);
+  } else {
+    console.log('Weather upsert succeeded. Rows sent:', rows.length);
+  }
+}
+fetchWeather();
