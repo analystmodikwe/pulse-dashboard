@@ -1,0 +1,1 @@
+earthquakes staying flat at 44 across reruns, weather correctly adding a new row only when the observed timestamp actually changes (e.g. Tokyo's next reading).
