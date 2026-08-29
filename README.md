@@ -1,1 +1,1 @@
-# pulse-dashboard
+# Pulse — Live World Snapshot Board
