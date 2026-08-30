@@ -1,5 +1,7 @@
 # Pulse — Live World Snapshot Board
 
+live deployment: https://pulse-dashboard-olive.vercel.app/
+
 ## Design Rationale
 
 This project stores two independent, live datasets: earthquakes from the USGS
